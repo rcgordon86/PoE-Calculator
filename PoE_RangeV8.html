@@ -1,0 +1,423 @@
+<!-- makeappicon.com -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AC PoE Range</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+    <style>
+        html{
+            background:#99ccff;
+            font-weight: bolder;
+        }
+        .slides{
+            width: 90%;
+            margin: auto;
+            display:grid;
+            display:flex
+        }
+        #volts{
+            width: 90%;
+            
+
+        }
+        #sliderS{
+            margin-left: 5px;
+            width: 100%;
+            display:inline-block;
+        }
+        #sliderR{
+            margin-left: 5px;
+            width: 100%;
+            float:left;
+        }
+        img, .levels {padding: 10px;
+            border-radius: 20px;
+            border: solid 2px;
+            padding: 10px;
+            margin: 10px;
+            width: 100px;}
+        .levels{
+            float: right;
+            margin-right: 25px;
+        }
+        #radioimg{
+            background: #33ff33;
+        }
+        #poeimg{
+            background: #33ff33;
+        }
+        #radio{
+            float: left;
+        }
+        #wires{
+            width: 30%;
+        }
+        #ethcable{
+            width: 30%;
+        }
+        #theradio{
+            width: 20%
+        }
+        figcaption, h1, h4{
+            text-align: center;
+        }
+        #dialog{
+            display: flex;
+            width: 90%;
+        }
+        #alarms{
+            margin-left: 300px;
+        }
+        #alarmmessage{
+            color: red;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    
+    <script>
+        $(document).ready( function() { 
+            
+            $(function(){
+                //$("div").css("border", "3px solid red");
+            });
+            var ac = true;
+            var resConn = 0.03;// connector resistance equiv in ethernet cable - also for source wire for now
+            var resAWG24 = 0.084;//res/meter awg 24 wire
+            var effRadio = 1.0;
+            var effPoE = 0.8;
+            var Kwire = 0.008;//awg14
+            var poeV = 55;
+            var radioOK = true;//radio has enough voltage for power level
+            var poeOK = true;// PoE has enough voltage for power level
+            var poeCurOK = true;//PoE current < 2.27A
+            var radioVinOK = true;// radio input voltage >= 36VDC
+            var poeVinOK = true;//PoE input voltage >= 100VAC
+
+            // variables for inputs and their labels
+            var sliderS  = $("#sliderS");  // slider - length of input to PoE value 0-100
+            var sliderSlabel = $("#feedlengthslider")// label for feed length
+            var sliderR  = $("#sliderR");   // slider - length of ethernet cable
+            var sliderRlabel = $("#ethernetlengthslider"); //label for ethernet length
+            var volts = $("#volts");  //slider - source voltage
+            var voltslabel = $("#voltsslider"); //label for source voltage
+            var sliderpower = $("#sliderpower"); //slider -radio power consumption
+            var sliderpowerlabel = $("#labelpower"); //label for radio power
+            var awg = document.getElementsByName("awg");     // radio button wire gauge input run
+            var sourceimg = $("#sourceimg");//image for source
+            
+            var powertype = document.getElementsByName("source");//gives [object NodeList]
+            var acordc = $('input[name="source"]');//gives object
+
+
+            //variables for output VA labels
+            var poevolts = $("#poevolts");
+            var poeamps = $("#poeamps");
+            var radiovolts = $("#radiovolts");
+            var radioamps = $("#radioamps");
+            //variables for images
+            var poeimg = $("#poeimg");
+            var radioimg = $("#radioimg");
+            //variables for VA's
+            var currentR = 0;//current into radio
+            var voltageR = 0;//voltage at radio input
+            var currentP = 0;//current into PoE
+            var voltageP = 0;//voltage at PoE input
+            //set inputs onchange
+            volts.change (function(){
+                slideX();
+            });
+            sliderR.change (function(){
+                slideX();
+            });
+            sliderS.change (function(){
+                slideX();
+            });
+            sliderpower.change (function(){
+                slideX();
+            });
+            $('input[type="radio"][name="awg"]').change(function() {
+                slideX();
+            });
+            $('input[type="radio"][name="source"]').change(function() {
+                //set min max
+                
+                slideX();
+            });
+            
+            //set range for AC vs DC
+            acordc.change(function(){
+                if (this.value == "AC") {
+                    volts.prop({
+                        'min': 100,
+                        'max': 240
+                    });
+                    sourceimg.prop({
+                        'src': "Ac_source_181x181.png"
+                    });
+                    volts.val(120);
+                    ac = true;
+                }
+                if (this.value == "DC") {
+                    volts.prop({
+                        'min': 40,
+                        'max': 60
+                    });
+                    sourceimg.prop({
+                        'src': "Dc_source_512x512.png"
+                    });
+                    volts.val(48);
+                    ac = false;
+                }
+                slideX();
+                
+            });
+
+            slideX();
+            // Runs when any input is changed
+            function slideX(){
+                //reset flags
+                radioOK = true;// radio has enough voltage
+                poeOK = true;// PoE has enough voltage
+                poeCurOK = true;//PoE current < 2.27A
+                radioVinOK = true;// radio input voltage >= 36VDC
+                poeVinOK = true;//PoE input voltage >= 100VAC
+                //input values
+                var sourceV = volts.val();
+                var feedlength = sliderS.val();
+                var ethlength = sliderR.val();
+                var radiopower = sliderpower.val();
+                //get wire resistance              
+                var wiresize = $('input[name="awg"]:checked').val();
+                
+                var typeofpower = $('input[name="source"]:checked').val();//string AC or DC
+                
+                //set source slider range
+                //volts.slider( "option", "max", 60 );
+
+
+                var Kwire = .008;
+                if(wiresize == 14)Kwire = .008;
+                if(wiresize == 16)Kwire = 0.0125;
+                if(wiresize == 18)Kwire = 0.02;
+                
+                //calculate currents and voltages at inputs to radio and PoE
+                currentR = getCurrentX(poeV, ethlength, radiopower, resAWG24, resConn, effRadio);
+                voltageR = (radiopower / currentR).toFixed(2);
+                currentP = getCurrentX(sourceV, feedlength, radiopower, Kwire, resConn, effPoE);
+                voltageP = ((radiopower  * 1.25) / currentP).toFixed(2);
+                //set slider labels:
+                voltslabel.text("Source voltage: " + sourceV + "V" + typeofpower);
+                sliderSlabel.text("Feed Length: " + feedlength + "m (" + (3.28084 * feedlength).toFixed(0) + "ft)");
+                sliderRlabel.text("Ethernet Length: " + ethlength + "m (" + (3.28084 * ethlength).toFixed(0) + "ft)");
+                sliderpowerlabel.text("Radio Power: " + radiopower + "W");
+                // SET VA LEVELS
+                radiovolts.text("Vin = " + voltageR);
+                radioamps.text("Iin = " + currentR);
+                poevolts.text("Vin = " + voltageP);
+                poeamps.text("Iin = " + currentP);
+                //set flags
+                if(isNaN(currentR))radioOK = false; //not enough volts to run radio
+                if(isNaN(currentP))poeOK = false;   //not enough volts to run poe
+                if(currentR > 2.27)poeCurOK = false;//poe output current exceeds 2.27A
+                if(voltageR < 36)radioVinOK = false;//radio input voltage below 36V
+                
+
+                //alarm handling
+                var vmin = 100;
+                if(ac) {
+                    vmin = 100;
+                }else{
+                    vmin = 40;
+                }
+                if(voltageP < vmin){
+                    poeVinOK = false; //poe input voltage below vmin
+                }
+                var radioOKmessage = "Not enough volts to run radio\n";
+                var poeOKmessage = "Not enough voltage to run PoE\n";
+                var poeCurOKmessage = "PoE output current exceeds 2.27A\n";
+                var radioVinOKmessage = "Radio input voltage below 36V\n";
+                var poeVinOKmessage = "PoE input voltage below " + vmin + "\n";
+                var alarmlabel = $("#alarmmessage");
+                var alarmstring = "";
+                if(!radioOK){
+                    alarmstring += (radioOKmessage + "<br>");
+                }
+                if(!poeOK){
+                    alarmstring += (poeOKmessage + "<br>");
+                }
+                if(!poeCurOK){
+                    alarmstring += (poeCurOKmessage + "<br>");
+                }
+                if(!radioVinOK){
+                    alarmstring += (radioVinOKmessage + "<br>");
+                }
+                
+                if(!poeVinOK){
+                    alarmstring += (poeVinOKmessage + "<br>");
+                }
+                if(alarmstring == ""){
+                    alarmstring = "No Faults";
+                }
+                alarmlabel.html(alarmstring);
+                if(!poeOK){
+                    //poeimg.style.background = "red";
+                    document.getElementById("poeimg").style.background = "red";
+                    
+                }else{
+                    document.getElementById("poeimg").style.background = "#33ff33";
+                }
+                if(!radioOK){
+                    //poeimg.style.background = "red";
+                    document.getElementById("radioimg").style.background = "red";
+                    
+                }else{
+                    document.getElementById("radioimg").style.background = "#33ff33";
+                }
+
+            }
+
+            
+            //evaluates quadratic for current loop
+            function getCurrentX(volts, length, power, Kwire, Rcon, eff){
+                var a = length * Kwire / 2 + Rcon;
+                //alert("a X: " + a);
+                var b = -1 * volts;
+                var c = power / eff;
+                current = ((-1 * b - Math.sqrt(Math.pow(b, 2) - (4 * a * c))) / (2 * a)).toFixed(3);
+                return current;
+            }            
+            
+
+        });
+
+        </script>
+    </head>
+
+<body>
+
+<div data-role="page">
+
+    <div data-role="header" 
+       style="background-color: #5b7988; color: #fff; text-shadow: 1px 1px 1px #000; letter-spacing: 1px; font-size: 1.3em">
+        <h1>PoE Range Calculator</h1>
+    </div><!-- /header -->
+
+    <div data-role="content">
+
+
+            <div id="slides" class="slides">
+
+                <div data-role="fieldcontain"  >
+                    <label for="volts" id="voltsslider">Volts:</label>
+                    <input type="range" id="volts" name="volts" value="120" min="100" max="240" data-highlight="true">
+                    <form action="" id="source"><br><br>
+                        <input type="radio" name="source" value="AC" checked='checked'><label>AC 100-240V</label><br>
+                        <input type="radio" name="source" value="DC"><label>DC 40-60V</label>
+                    </form>
+                </div>
+                
+                <div>
+                    <img src="Ac_source_181x181.png" alt="Voltage source" style="background: yellow" id="sourceimg">
+                    <figcaption>Voltage Source</figcaption>
+                </div>
+                
+                
+                <div data-role="fieldcontain" id="wires">
+                    <label for="sliderS" id='feedlengthslider'>Feed Length:</label><br>
+                    <input type="range" id="sliderS" name="sliderS" value="10" min="1" max="1000"  data-highlight="true">
+
+ 
+                        <form action="" id="radio">
+                            <label>AWG14</label><input type="radio" name="awg" value="14" checked='checked'><br>
+                            <label>AWG16</label><input type="radio" name="awg" value="16"><br>
+                            <label>AWG18</label><input type="radio" name="awg" value="18"><br>
+                        </form>
+
+
+                 <br><br><br>
+                    <div class="levels">
+                        <label for="poevolts" id="poevolts">Volts</label>
+                        <output id="poevolts"></output><br>
+                        <label for="poeamps" id="poeamps">Amps</label>
+                        <output id="poeamps"></output>
+                    </div>
+                    
+                </div>
+                <div>
+                    <img src="PoE_800x800.png" id="poeimg" alt="AC PoE">
+                    <figcaption>55V Output</figcaption>
+                </div>
+
+                <div data-role="fieldcontain" id="ethcable">
+                    <label for="sliderR" id="ethernetlengthslider">Ethernet Length:</label><br>
+                    <input type="range" id="sliderR" value="10" min="1" max="200"  data-highlight="true">
+                    
+                    <br><br><br>
+                    
+                    <div class="levels">
+                        <label for="radiovolts" id="radiovolts">Volts</label>
+                        <output id="radiovolts"></output><br>
+                        <label for="radioamps" id="radioamps">Amps</label>
+                        <output id="radioamps"></output>
+                    </div>
+                </div>
+                
+                <div id="theradio">
+                    <img src="antenna_514x478.jpg" id="radioimg" alt="Navigator"><br>
+                    <label for="sliderPower" id="labelpower">Radio Power:</label><br>
+                    <input type="range" id="sliderpower" value="100" min="50" max="125"  data-highlight="true">
+                </div>
+                
+            </div>
+
+    </div><!-- /content -->
+
+<div data-role="footer" data-position="fixed" style="background-color: #5b7988; color: #fff; text-shadow: 1px 1px 1px #000; letter-spacing: 1px; font-size: 1.0em">
+    <h4>How Far Can You Go?</h4>
+    
+</div><!-- /footer -->  
+    
+    <div id="dialog">
+        <div id="rules">
+            <ul><h2>THE RULES</h2>
+                <li>PoE efficiency 80%</li>
+                <li>Radio Input 36VDC minimum</li>
+                <li>PoE input 100VAC minimum</li>
+                <li>PoE input 40VDC minimum</li>
+                <li>PoE output 2.27A max for 125W</li>
+                <li>Ethernet Cable is 24AWG</li>
+            </ul>
+        </div>
+        <div id="alarms">
+            <h2>ALARMS</h2>
+            <label id="alarmmessage">No Faults</label>
+            
+        </div>
+    </div>
+
+</div><!-- /page -->
+    
+
+<script>
+
+    
+function myFunction() {
+    var x = document.getElementById("myDIV");
+    if (x.style.display === "none") {
+        x.style.display = "block";
+    } else {
+        x.style.display = "none";
+    }
+}
+
+</script>
+
+</body>
+</html>
+
+
+
