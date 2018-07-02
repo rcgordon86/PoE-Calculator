@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
+    <meta name="viewport" content="width=device-width" />
+    <title>PoE Calculator</title>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
+    <link rel="stylesheet" href="poe_v10.css">
+    <script src="//code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="poe_v10.js"></script>
+    
+</head>
+<body>
+
+  <div id="fragment-2">
+      <table id="linetable">
+          <tr>
+              <td id="tdin">
+                  <h3>Source</h3>
+                <div class="range" id="vin">
+                    <div id="vinslider" class="frag2"></div>
+                    <input type="number" min="0" id="vintext" />
+                    <label id="vinlabel">V</label>
+                    <div id="sourceimage">
+                        <img src="images/2000px-Voltage_Source.svg.png" alt="Voltage Source" width="100px" height = 100px>     
+                    </div>
+                    
+                </div>
+                  
+              </td>
+
+              <td class="lines">
+                  <h3>Feed Line Length</h3>
+                <div class="range" id="linePoe">
+                    <div id="feedslider" class="frag2"></div>
+                    <input type="number" min="0" id="feedtext" />
+                    <label id="feedlabel">m</label>
+                    <br><br>
+                    <label for="number">Wire Gauge (Pair)</label>
+                    <div id="select">
+                            <select name="awgf" id="awgf">
+                            <option>AWG20</option>    
+                            <option>AWG18</option>
+                            <option selected="selected">AWG16</option>
+                            <option>AWG14</option>
+                            <option>AWG12</option>
+                            <option>AWG10</option>
+                        </select>
+                    </div>
+                    
+                    <h4>PoE Input Levels:</h4>
+                    <div class="levels">
+                        <label for="poevolts" id="poevoltslabel">Volts:</label>
+                        <output id="poevolts"></output><br>
+                        <label for="poeamps" id="poeampslabel">Amps:</label>
+                        <output id="poeamps"></output><br>
+                        <label for="poewatts" id="poewattslabel">Watts:</label>
+                        <output id="poewatts"></output>
+                    </div>
+                    <br><br><br><br><br><br>
+                </div>
+              </td>
+              <td id="poeimage">
+                  <img alt="PoE" src="images/loraxpoe.png" width="100">
+                  <h4>PoE Output Levels:</h4>
+                    <div class="levels">
+                        <label for="poeOutVolts" id="poeOutVoltslabel">Volts:</label>
+                        <output id="poeOutVolts"></output><br>                     
+                        <label for="poeOutAmps" id="poeOutAmpslabel">Amps:</label>
+                        <output id="poeOutAmps"></output><br>
+                        <label for="poeOutWatts" id="poeOutWattslabel">Watts:</label>
+                        <output id="poeOutWatts"></output><br>
+                    </div>
+              </td>
+              
+              <td id="tdlineR" class="lines">
+                  <h3>Ethernet Line Length</h3>
+                <div class="range" id="lineRadio">
+                    <div id="lineslider" class="frag2"></div>
+                    <input type="number" min="0" id="linetext" />
+                    <label id="linelabel">m</label>
+                    <br><br>
+                    <label for="number">Wire Gauge (Pair)</label>
+                    <div id="select">
+                            <select name="awgr" id="awgr">
+                            <option>AWG26</option>
+                            <option selected="selected">AWG24</option>
+                            <option>AWG22</option>
+                        </select>
+                    </div>
+                    
+                    <h4>Radio Input Levels:</h4>
+                    <div class="levels">
+                        <label for="loadvolts" id="loadvoltslabel">Volts:</label>
+                        <output id="loadvolts"></output><br>
+                        <label for="loadamps" id="loadampslabel">Amps:</label>
+                        <output id="loadamps"></output><br>
+                        <label for="loadwatts" id="loadwattslabel">Watts:</label>
+                        <output id="loadwatts"></output>
+                    </div>
+                    <br><br><br><br><br><br>
+
+                                        
+
+                </div>
+              </td>
+
+              <td id="tdload">
+                  <h3>Radio</h3>
+                <div class="range" id="load">
+                    <div id="loadslider" class="frag2"></div>
+                    <input type="number" min="0" id="loadtext" />
+                    <label id="loadlabel">W</label>
+
+                </div>
+                <div id="radimage">
+                     <img src="images/Navigator%20DT%20-Picture1.png" alt="Bridgewave Navigator" width="80px">
+                </div>
+              </td>
+          </tr>
+      </table>
+
+
+
+  </div>
+    
+    <div>
+    <table id="foottab">NOTICE:
+        <tr>
+            <td>
+                
+        <div id="alarmsP" class="alarms"></div><br>
+        <div id="alarmsR" class="alarms"></div>
+            </td>
+            <td>
+            <label id="whatup">
+                <div>Calculations include residual 0.1&Omega; connector resistance.</div>
+                <div id="rad40">Radio requires 40V input.</div>
+                <div id="poe44">PoE requires 44V input.</div>
+
+            PoE efficiency 80%<br>
+            
+            </label>
+            </td>
+        </tr>
+    </table>          
+    
+    </div>
+</body>
+<footer class="footer">
+    
+      <small><i>Copyright &copy; 1953 Uneeda Web Developer</i></small>
+        <div>
+            <a href="http://jigsaw.w3.org/css-validator/check/referer">
+            <img style="border:0;width:88px;height:31px"
+                src="http://jigsaw.w3.org/css-validator/images/vcss-blue"
+                alt="Valid CSS!" />
+            </a>
+        </div>
+    
+  
+        
+        
+</footer>
+</html>
+
+
+
+
+
+
+
+
+
